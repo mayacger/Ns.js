@@ -41,7 +41,7 @@
 (function(ns){
     var doc = window.document,
         body = doc.body;
-    Ns.include({
+    ns.include({
         /**
         *  DomReay
         * @param  {Function} callback [加载完成执行]
