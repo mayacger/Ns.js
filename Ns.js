@@ -35,16 +35,18 @@
     }
     global.ns = new Ns();
 }(this));
-
+/**
+ * 事件
+ */
 (function(ns){
     var doc = window.document,
         body = doc.body;
-    /**
-     *  DomReay
-     * @param  {Function} callback [加载完成执行]
-     * @return {[type]}            [description]
-     */
     Ns.include({
+        /**
+        *  DomReay
+        * @param  {Function} callback [加载完成执行]
+        * @return {[type]}            [description]
+        */
         onDomReady: function(callback){
             if (doc.addEventListener) {
                 doc.addEventListener('DOMContentLoaded', callback, false);
@@ -55,6 +57,39 @@
                     return setTimeout(argument.callee, 0);
                 }
             }
+        },
+        /**
+         * 创建新的event命名空间
+         * @type {Object}
+         */
+        Events:{
+            bind: function(elem, eventType, callback){
+                elem = elem || window;
+                // 转为小写
+                eventType = eventType.toLowerCase();
+
+                if(elem.addEventListener){
+                    elem.addEventListener(eventType, callback, false);
+                }else if(elem.attachEvent){
+                    elem.attachEvent('on' + eventType, callback);
+                };  
+            },
+            unbind: function(elem, eventType, callback){
+
+                eventType = eventType.toLowerCase();
+
+                if ( elem.detachEvent ) {
+                    elem.detachEvent("on" + eventType, callback);
+                } else{
+                    elem.removeEventListener(elem, eventType, callback);
+                }; 
+            }
         }
     });
 }(ns));
+/**
+ * AJAX
+ */
+/**
+ * 动画
+ */
