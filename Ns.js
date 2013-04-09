@@ -33,10 +33,10 @@
         };
 
     }
-    global.Ns = new Ns();
+    global.ns = new Ns();
 }(this));
 
-(function(Ns){
+(function(ns){
     var doc = window.document,
         body = doc.body;
     /**
@@ -57,4 +57,4 @@
             }
         }
     });
-}(Ns));
+}(ns));
