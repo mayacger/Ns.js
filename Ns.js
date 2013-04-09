@@ -36,6 +36,27 @@
     global.ns = new Ns();
 }(this));
 /**
+ * DOM
+ */
+(function(ns){
+    var doc = window.document,
+        body = doc.body;
+    ns.include({
+        $: function(selector){
+            switch(selector.charAt(0)){
+                case "#":
+                    var objStr = selector.substring(1,selector.length);
+                    return doc.getElementById(objStr);
+                break;
+                case ".":
+
+                break;
+                default : 
+            };
+        }
+    });
+}(ns));
+/**
  * 事件
  */
 (function(ns){
