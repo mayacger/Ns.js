@@ -24,8 +24,7 @@
         var sObj = null;
         //当父对象不存在时，使用document;
         context = context || document;
-        switch(s.charAt(0))
-        {
+        switch(s.charAt(0)){
             case '#':
                 //ID选择器
                 sObj = document.getElementById(s.substr(1));
@@ -44,8 +43,7 @@
                 break;
         }
 
-        if(val)
-        {
+        if(val){
             //[t=val]筛选属性匹配
             var l = [];
             var a = val.split('=');
@@ -54,8 +52,7 @@
             obj = l;
         }
 
-        if(attr)
-        {
+        if(attr){
             //: 筛选属性匹配
             var l = [];
             for(var i=0; i<obj.length; i++)
@@ -63,8 +60,7 @@
             obj = l;
         }
 
-        if(ss.length > 1)
-        {
+        if(ss.length > 1){
             //递归处理表达式后续内容
             //父元素为已获取的所有元素
             var l = [];
@@ -142,7 +138,8 @@
         *-----------------------------------
         *如果是.hasClass(v)
         *@param v className,
-        *@return 判断DOM element是否含有名为@param v的className属性
+        *@return 判断DOM element是否含有名为
+        *@param v的className属性
         */
         hasClass: function(v){
             if(v == undefined){
