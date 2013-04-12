@@ -244,7 +244,9 @@
             this.each(function(){
                 _unbind(this, eventType, callback);
             })
-        }
+        },
+        isArray: _isArray,
+        isFunction: _isFunction
     };
     Ns.fn.init.prototype = Ns.fn;
     /**
