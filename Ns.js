@@ -125,6 +125,12 @@
         return el.getAttribute(val);
     }
     function _setAttr(el, key, val){
+        if(typeof  key === 'object'){
+            _each(key, function(k ,v){
+                _setAttr(el, k ,v);
+            });
+            return;
+        }
         if (_IE && _V < 8 && key.toLowerCase() == 'class') {
             key = 'className';
         }
@@ -161,7 +167,20 @@
         }
     }
     function _setCss(el, key, val){
+        if(typeof  key === 'object'){
+            _each(key, function(k ,v){
+                _setCss(el, k ,v);
+            });
+            return;
+        }
         el.style[key] = val;
+    }
+    function _getStyle(obj, attr) {
+        if(obj.currentStyle) {
+            return obj.currentStyle[attr];//兼容IE浏览器
+        } else {
+            return getComputedStyle(obj, false)[attr];//兼容firefox chrome
+        }
     }
     function _bind(elem, eventType, callback){
         // 转为小写
@@ -311,6 +330,9 @@
             }
             return obj;
         },
+        size: function(){
+           return this.length;
+        },
         /**
          * Dom方法
          * @param value
@@ -330,32 +352,23 @@
             return this;
         },
         attr: function(key, val){
-            var self = this[0],
-                _this = this;
+            var self = this[0];
             if (key === undefined) {
                 return self;
             }
-            if (typeof key === 'object') {
-                this.each(key,function(v, k) {
-                    _this.attr(k, v);
-                });
-            }
-            if (val === undefined) {
+            if (val === undefined && typeof key != 'object') {
                 val = self.length < 1 ? null : _getAttr(self, key);
                 return val === null ? '' : val;
             }
             this.each(this, function() {
                 _setAttr(this, key, val);
             });
-            return this;
+            return _this;
         },
         css: function(key, val){
-            var self = this[0],
-                _this = this;
-            if(typeof key === 'object'){
-                this.each(key, function(v, k) {
-                    _this.css(k, v);
-                });
+            var self = this[0];
+            if(val === undefined && typeof key === 'object'){
+                return _getStyle(self, key);
             }
             this.each(this, function() {
                 _setCss(this, key, val);
