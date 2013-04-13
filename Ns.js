@@ -253,19 +253,19 @@
                 this.length = 1;
                 return this;
             }
-            //$('div.class')
+            //N('div.class')
             if(regCls.test(expr)){
                 var ary = expr.split('.'),
                     all = context.getElementsByTagName(ary[0] || '*');
                 this._toSelf(_filter(all,'className',ary[1]));
                 return this;
             }
-            //$('div')
+            //N('div')
             if(regTag.test((expr))){
                 this._toSelf(context.getElementsByTagName(expr));
                 return this;
             }
-            //
+            //N('input[type=text]')
             if(regNodeAttr.test((expr))){
                 var arr = regNodeAttr.exec(expr),
                     all = context.getElementsByTagName(arr[1] || '*');
