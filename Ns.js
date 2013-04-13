@@ -82,6 +82,25 @@
     		return res;
     	}
     }
+    function _merge( first, second ) {
+        var l = second.length,
+            i = first.length,
+            j = 0;
+
+        if ( typeof l === "number" ) {
+            for ( ; j < l; j++ ) {
+                first[ i++ ] = second[ j ];
+            }
+        } else {
+            while ( second[j] !== undefined ) {
+                first[ i++ ] = second[ j++ ];
+            }
+        }
+
+        first.length = i;
+
+        return first;
+    }
     /**
      * class
      * @param all
@@ -272,8 +291,10 @@
                 this._toSelf(_filter(all, arr[2], arr[4]));
                 return this;
             }
+            console.log('gogo');
         },
         length: 0,
+        selector:'',
         _toSelf: function(els){
             push.apply(this, _makeArray(els));
         },
