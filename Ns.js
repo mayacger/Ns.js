@@ -7,12 +7,10 @@
         _V = _matches ? _matches[1] : '0',
         doc = global.document,
         body = doc.body,
+        proto_ary = Array.prototype,
+    	slice = proto_ary.slice,
+    	push = proto_ary.push,
         rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/;
-    //基础类
-    var Ns = function(expr, root){
-        return new Ns.fn.init(expr, root);
-    }
-
     /**
      * 数组判断
      * @param val
@@ -65,6 +63,58 @@
     }
 
     /**
+     * 转为数组
+     * @param obj
+     * @returns {Array}
+     * @private
+     */
+    var _makeArray = function(){
+    	return Array.prototype.slice.call(arguments, 0);
+    }
+    try{
+    	Array.prototype.slice.call(document.documentElement.childNodes, 0)[0].nodeType;
+    }catch(e){
+        _makeArray = function(obj){
+    		var res = [];
+    		for(var i = 0, len = obj.length; i < len; i++){
+    			res.push(obj[i]);
+    		}
+    		return res;
+    	}
+    }
+    /**
+     * class
+     * @param all
+     * @param attr
+     * @param val
+     * @returns {Array}
+     */
+    function _filter(all,attr,val){
+        var reg = RegExp('(?:^|\\s+)' + val + '(?:\\s+|$)');
+        function test(node) {
+            var v = attr == 'className' ? node.className : node.getAttribute(attr);
+            if(v) {
+                if(val) {
+                    if(reg.test(v))
+                        return true;
+                } else {
+                    return true;
+                }
+            }
+            return false;
+        }
+        var i = -1,
+            el,
+            r = -1,
+            res = [];
+        while((el = all[++i])) {
+            if(test(el)){
+            res[++r] = el;
+            }
+        }
+        return res;
+    }
+    /**
      * 私有属性操作
      * @param el
      * @param val
@@ -110,6 +160,9 @@
             return result;
         }
     }
+    function _setCss(el, key, val){
+        el.style[key] = val;
+    }
     function _bind(elem, eventType, callback){
         // 转为小写
         eventType = eventType.toLowerCase();
@@ -130,92 +183,182 @@
             elem.removeEventListener(elem, eventType, callback);
         };
     }
-    /**
-     * 向外传递接口
-     * @type {Function}
-     */
-    global.N = global.ns = Ns;
-
+    //基础类
+    var NS = function(expr, root){
+        return new NS.fn.init(expr, root);
+    }
     //定义prototype别名
-    Ns.fn = Ns.prototype = {
-        constructor: Ns,
-        init: function(expr, root){
-            var elem=[],
-                match,
-                m,
-                nodetype;
-            root = root || doc;
-            //N('');
+    NS.fn = NS.prototype = {
+        NS: _VERSION,
+        constructor: NS,
+        init: function(expr, context){
+            var regId = /^#[\w\-]+/,
+                regCls = /^([\w\-]+)?\.([\w\-]+)/,
+                regTag = /^([\w\*]+)$/,
+                regNodeAttr = /^([\w\-]+)?\[([\w]+)(=(\w+))?\]/,
+                //开头以#或者数字字符组成
+                simple = /^[\w\-#]+$/.test(expr);
+            //如果没有传入context就使用document
+            context = context || doc;
+            //下面逻辑需要
+            typeof context === 'string' ? doc.getElementById(context.substring(1,context.length)) : context;
+            //如果什么都没有传入直接返回
             if(!expr){
                 return this;
             }
-            //html字符串检测
-            if(typeof expr === 'string'){
-                if(match = rquickExpr.exec(expr)){
-                    if(m = match[1]){//N(id);
-                        elem.push(root.getElementById( m ));
-                    }else if(match[2]){//N(tag);
-                        elem = root.getElementsByTagName( expr )
-                    }else if((m = match[3])){//$(class);
-                        elem = _getElementsByClassName(root, m);
+            //N('body/div/...') or N(window)
+            if(expr.nodeType || expr == window){
+                this[0] = expr;
+                this.length = 1;
+                return this;
+            }
+            //如果支持querySelectorAll
+            if(!simple && context.querySelectorAll){
+                if(context.nodeType === 1){
+                    var old = context.id,
+                        id = context.id = 'NS';
+                    try{
+                        return this._toSelf(context.querySelectorAll('#' + id + " " + expr));
+                    } catch(e){
+
+                    }finally{
+                        old ? context.id = old : context.removeAttribute('id');
                     }
+                    this._toSelf(context.querySelectorAll(expr));
+                    return this;
+                }
+            }
+            //N('#id')
+            if(regId.test(expr)){
+                this[0] = doc.getElementById(expr.substr(1, expr.length));
+                this.length = 1;
+                return this;
+            }
+            //$('div.class')
+            if(regCls.test(expr)){
+                var ary = expr.split('.'),
+                    all = context.getElementsByTagName(ary[0] || '*');
+                this._toSelf(_filter(all,'className',ary[1]));
+                return this;
+            }
+            //$('div')
+            if(regTag.test((expr))){
+                this._toSelf(context.getElementsByTagName(expr));
+                return this;
+            }
+            //
+            if(regNodeAttr.test((expr))){
+                var arr = regNodeAttr.exec(expr),
+                    all = context.getElementsByTagName(arr[1] || '*');
+                this._toSelf(_filter(all, arr[2], arr[4]));
+                return this;
+            }
+        },
+        length: 0,
+        _toSelf: function(els){
+            push.apply(this, _makeArray(els));
+        },
+        each: function(fn){
+            return NS.each(this, fn);
+        }
+    };
+    NS.fn.init.prototype = NS.fn;
+    /**
+     * 拓展ns
+     *如果是一个参数 .extend(obj)
+     *@param obj 封装好将要扩展的属性或方法集合
+     *------------------------------------------
+     *如果是二个参数 .extend(str,v)
+     *@param str 扩展的属性名
+     *@param v 扩展的属性名@param str的值或方法
+     *
+     *如果自定义的属性和_T中的属性重名 不会覆盖原有属性
+     */
+    NS.extend = NS.fn.extend = function(){
+        if(arguments.length == 1){
+                for(var i in arguments[0]){
+                    NS.prototype[i] = arguments[0][i];
+                }
+        }
+        if(arguments.length == 2){
+            NS.prototype[arguments[0]] = arguments[1];
+        }
+    };
+    /**
+     * 基础方法
+     */
+    NS.extend({
+        /**
+         * 遍历
+         * @param obj
+         * @param fn
+         * @returns {Object}
+         */
+        each: function(obj, fn){
+            if(!obj || typeof fn != 'function'){
+                return;
+            }
+            var name, i = 0, len = obj.length;
+            if('length' in obj){
+                for(var val = obj[0]; i < len && fn.call(val, val, i) !== false; val = obj[++i]){
                 }
             }else{
-                if(typeof expr === "object"){
-                    elem.push(expr);
+                for(name in obj){
+                    if(fn.call(obj[name], obj[name], name) === false){
+                        break;
+                    }
                 }
             }
-            this.expr = this[0] = elem;
-            return this;
-        },
-        /**
-         *
-         * @param fn
-         */
-        each: function(fn){
-            var self = this.expr;
-            for(var i = 0; i < self.length; i++){
-                if(fn.call(self[i], i, self[i]) == false){
-                    return self;
-                }
-            }
-            return this;
+            return obj;
         },
         /**
          * Dom方法
          * @param value
-         * @returns {*}
+         * @returns {this}
          */
         html: function(value){
-            var self = this.expr;
+            var self = this[0];
             if(value === undefined){
                 if(self.length < 1){
                     return '';
                 }
-                return self[0].innerHTML;
+                return self.innerHTML;
             }
-            this.each(function(){
+            this.each(this,function(){
                 this.innerHTML = value;
             });
             return this;
         },
         attr: function(key, val){
-            var self = this.expr;
+            var self = this[0],
+                _this = this;
             if (key === undefined) {
                 return self;
             }
             if (typeof key === 'object') {
-                _each(key, function(k, v) {
-                    self.attr(k, v);
+                this.each(key,function(v, k) {
+                    _this.attr(k, v);
                 });
-                return self;
             }
             if (val === undefined) {
-                val = self.length < 1 ? null : _getAttr(self[0], key);
+                val = self.length < 1 ? null : _getAttr(self, key);
                 return val === null ? '' : val;
             }
-            this.each(function() {
+            this.each(this, function() {
                 _setAttr(this, key, val);
+            });
+            return this;
+        },
+        css: function(key, val){
+            var self = this[0],
+                _this = this;
+            if(typeof key === 'object'){
+                this.each(key, function(v, k) {
+                    _this.css(k, v);
+                });
+            }
+            this.each(this, function() {
+                _setCss(this, key, val);
             });
             return this;
         },
@@ -229,45 +372,34 @@
         *@param v的className属性
         */
         hasClass: function(cls){
-            var self = this.expr;
+            var self = this[0];
             if(self.length < 1){
                 return false;
             }
             return _hasClass(self[0], cls);
         },
         bind: function( eventType, callback){
-            this.each(function(){
+            this.each(this[0], function(){
                _bind(this, eventType, callback);
             });
         },
         unbind: function(eventType, callback){
-            this.each(function(){
+            this.each(this[0], function(){
                 _unbind(this, eventType, callback);
             })
         },
         isArray: _isArray,
         isFunction: _isFunction
-    };
-    Ns.fn.init.prototype = Ns.fn;
+    });
     /**
-     * 拓展ns
-     *如果是一个参数 .extend(obj)
-     *@param obj 封装好将要扩展的属性或方法集合
-     *------------------------------------------
-     *如果是二个参数 .extend(str,v)
-     *@param str 扩展的属性名
-     *@param v 扩展的属性名@param str的值或方法
-     *
-     *如果自定义的属性和_T中的属性重名 不会覆盖原有属性
+     * 向外传递接口
+     * @type {Function}
      */
-    Ns.extend = Ns.fn.extend = function(){
-        if(arguments.length == 1){
-                for(var i in arguments[0]){
-                        Ns.prototype[i] = arguments[0][i];
-                }
-        }
-        if(arguments.length == 2){
-                Ns.prototype[arguments[0]] = arguments[1];
-        }
+    global.N = global.NS = NS;
+    /**
+     * add AMD module
+     */
+    if ( typeof define === "function" && define.amd && define.amd.NS ) {
+    	define( "NS", [], function () { return NS; } );
     }
 }(this));

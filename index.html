@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>NS test</title>
+        <script src="Ns.js"></script>
+    </head>  
+<body>
+    <div id='content'>aaa</div>
+    <div>bbb</div>
+    <p class="pra">ccc</p>
+    <p class="pra">ccc</p>
+    <p class="pra">ccc</p>
+    <input type="submit" value="submit"/>
+    <input type="button" value="submit"/>
+    <script type="text/javascript">
+        var obj1 = N("#content"); // id
+        var obj2 = N('div'); // tagName
+        var obj3 = N('.pra'); // className
+        var obj4 = N('input[type=button]'); // attribute
+        obj1.html('border1px solid #f00').css('border','1px solid #f00').attr({
+            x: 1,
+            y: 2
+        });
+         obj3.bind('click',function(){
+             N(this).html('bind');
+        });
+//       console.log(x)
+    </script>
+</body>
+</html>
